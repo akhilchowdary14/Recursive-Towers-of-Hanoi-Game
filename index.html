@@ -1,445 +1,1192 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Recursive Tower of Hanoi</title>
-
+<title>Tower of Hanoi — Temple of Recursion</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --gold: #f0c040;
+    --gold-dim: #a07820;
+    --bg: #0a0808;
+    --stone: #1a1210;
+    --stone2: #221815;
+    --red-peg: #c0392b;
+    --glow-a: #e67e22;
+    --glow-b: #8e44ad;
+    --glow-c: #16a085;
+    --text: #e8d5b0;
+    --text-dim: #8a7560;
+  }
 
-body{
-margin:0;
-font-family:Segoe UI,Arial;
-background:#0f172a;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-color:white;
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* LOGIN CARD */
+  body {
+    background: var(--bg);
+    font-family: 'Cinzel', serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
 
-.card{
-width:420px;
-background:#1e293b;
-padding:40px;
-border-radius:18px;
-box-shadow:0 10px 30px rgba(0,0,0,0.6);
-text-align:center;
-}
+  /* Animated background stars */
+  .stars {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(240,192,64,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(142,68,173,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, rgba(22,160,133,0.03) 0%, transparent 70%);
+  }
+  .stars::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(240,192,64,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 40% 30%, rgba(240,192,64,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 75%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 20%, rgba(142,68,173,0.5) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 80% 55%, rgba(240,192,64,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 15% 85%, rgba(22,160,133,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 10%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 90%, rgba(240,192,64,0.3) 0%, transparent 100%);
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    from { opacity: 0.6; }
+    to { opacity: 1; }
+  }
 
-.card h1{
-margin-bottom:5px;
-}
+  /* Ground mist */
+  .mist {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 120px; z-index: 0;
+    background: linear-gradient(to top, rgba(240,192,64,0.04), transparent);
+    pointer-events: none;
+    animation: mistPulse 6s ease-in-out infinite alternate;
+  }
+  @keyframes mistPulse {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+  }
 
-.subtitle{
-color:#94a3b8;
-margin-bottom:25px;
-}
+  /* ===== LOGIN CARD ===== */
+  #login {
+    position: relative; z-index: 10;
+    width: 440px;
+    background: linear-gradient(145deg, #1e1510, #110d0a);
+    border: 1px solid rgba(240,192,64,0.25);
+    border-radius: 4px;
+    padding: 48px 40px;
+    text-align: center;
+    box-shadow:
+      0 0 60px rgba(240,192,64,0.08),
+      0 20px 60px rgba(0,0,0,0.8),
+      inset 0 1px 0 rgba(240,192,64,0.15);
+    animation: fadeUp 0.8s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-.tabs{
-display:flex;
-background:#0f172a;
-border-radius:12px;
-margin-bottom:25px;
-}
+  .login-rune {
+    font-size: 42px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 16px rgba(240,192,64,0.6));
+    animation: runeGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes runeGlow {
+    from { filter: drop-shadow(0 0 8px rgba(240,192,64,0.4)); }
+    to { filter: drop-shadow(0 0 24px rgba(240,192,64,0.9)); }
+  }
 
-.tabs div{
-flex:1;
-padding:10px;
-border-radius:12px;
-cursor:pointer;
-color:#94a3b8;
-}
+  #login h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-shadow: 0 0 20px rgba(240,192,64,0.5);
+  }
 
-.tabs .active{
-background:#1e293b;
-box-shadow:0 2px 6px rgba(0,0,0,0.6);
-color:white;
-}
+  .login-sub {
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
 
-.input{
-background:#0f172a;
-padding:12px;
-border-radius:10px;
-margin:10px 0;
-}
+  /* Decorative divider */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 0 28px 0;
+  }
+  .divider-line { flex: 1; height: 1px; background: rgba(240,192,64,0.2); }
+  .divider-gem { color: var(--gold); font-size: 10px; }
 
-.input input{
-border:none;
-background:none;
-outline:none;
-width:100%;
-font-size:15px;
-color:white;
-}
+  .tabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-radius: 3px;
+    margin-bottom: 28px;
+    border: 1px solid rgba(240,192,64,0.15);
+    overflow: hidden;
+  }
+  .tabs div {
+    flex: 1; padding: 10px;
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .tabs div:hover { color: var(--text); }
+  .tabs .active {
+    background: rgba(240,192,64,0.1);
+    color: var(--gold);
+    border-bottom: 2px solid var(--gold);
+  }
 
-.start-btn{
-margin-top:20px;
-width:100%;
-background:#0891b2;
-color:white;
-border:none;
-padding:14px;
-border-radius:12px;
-font-size:16px;
-cursor:pointer;
-}
+  .input-group {
+    position: relative;
+    margin: 12px 0;
+  }
+  .input-group input {
+    width: 100%;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(240,192,64,0.15);
+    border-radius: 3px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .input-group input::placeholder { color: var(--text-dim); }
+  .input-group input:focus {
+    border-color: rgba(240,192,64,0.5);
+    box-shadow: 0 0 16px rgba(240,192,64,0.1);
+  }
 
-.start-btn:hover{
-background:#0ea5b7;
-}
+  .start-btn {
+    margin-top: 24px;
+    width: 100%;
+    background: linear-gradient(135deg, #b8860b, #f0c040, #b8860b);
+    background-size: 200%;
+    color: #0a0808;
+    border: none;
+    padding: 15px;
+    border-radius: 3px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.4s;
+    text-transform: uppercase;
+    box-shadow: 0 4px 20px rgba(240,192,64,0.3);
+  }
+  .start-btn:hover {
+    background-position: right;
+    box-shadow: 0 4px 30px rgba(240,192,64,0.6);
+    transform: translateY(-1px);
+  }
 
-/* GAME AREA */
+  /* ===== GAME AREA ===== */
+  #game {
+    display: none;
+    position: relative; z-index: 10;
+    width: 960px;
+    text-align: center;
+    animation: fadeUp 0.6s ease both;
+  }
 
-#game{
-display:none;
-width:900px;
-text-align:center;
-}
+  .game-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-shadow: 0 0 30px rgba(240,192,64,0.6);
+    margin-bottom: 6px;
+  }
+  .game-title-sub {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
 
-.top-bar{
-display:flex;
-justify-content:center;
-gap:15px;
-margin-bottom:20px;
-flex-wrap:wrap;
-}
+  .top-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
 
-button{
-background:#0891b2;
-color:white;
-border:none;
-padding:8px 15px;
-border-radius:10px;
-cursor:pointer;
-}
+  .stat-box {
+    background: rgba(240,192,64,0.06);
+    border: 1px solid rgba(240,192,64,0.2);
+    border-radius: 3px;
+    padding: 8px 18px;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .stat-box span {
+    color: var(--gold);
+    font-size: 18px;
+    display: block;
+    font-weight: 600;
+  }
 
-button:hover{
-background:#0ea5b7;
-}
+  .btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px; margin-bottom: 16px; }
 
-.container{
-display:flex;
-justify-content:space-around;
-margin-top:40px;
-}
+  .ctrl-btn {
+    background: rgba(240,192,64,0.08);
+    color: var(--gold);
+    border: 1px solid rgba(240,192,64,0.25);
+    padding: 8px 20px;
+    border-radius: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.25s;
+  }
+  .ctrl-btn:hover {
+    background: rgba(240,192,64,0.18);
+    box-shadow: 0 0 16px rgba(240,192,64,0.2);
+  }
+  .ctrl-btn.danger { color: #e74c3c; border-color: rgba(231,76,60,0.3); }
+  .ctrl-btn.danger:hover { background: rgba(231,76,60,0.12); }
+  .ctrl-btn.solve { color: #2ecc71; border-color: rgba(46,204,113,0.3); }
+  .ctrl-btn.solve:hover { background: rgba(46,204,113,0.12); }
+  .ctrl-btn.small { padding: 6px 12px; font-size: 16px; }
 
-.tower{
-width:200px;
-height:300px;
-border-bottom:8px solid #ef4444;
-position:relative;
-display:flex;
-flex-direction:column-reverse;
-align-items:center;
-}
+  /* ===== TEMPLE SCENE ===== */
+  .scene {
+    position: relative;
+    height: 340px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
 
-.tower::before{
-content:"";
-position:absolute;
-bottom:0;
-width:8px;
-height:250px;
-background:#ef4444;
-}
+  /* Ground platform */
+  .ground {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 20px;
+    background: linear-gradient(to bottom, #2a1f1a, #1a1210);
+    border-top: 2px solid rgba(240,192,64,0.3);
+    box-shadow: 0 -4px 30px rgba(240,192,64,0.1);
+  }
+  .ground::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(240,192,64,0.6), transparent);
+  }
 
-.disk{
-height:25px;
-margin:6px 0;
-border-radius:20px;
-text-align:center;
-line-height:25px;
-font-weight:bold;
-cursor:grab;
-color:white;
-}
+  /* Tower wrapper */
+  .tower-wrap {
+    position: relative;
+    width: 260px;
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+  }
 
-.bottom-info{
-margin-top:20px;
-font-size:18px;
-color:#cbd5f5;
-}
+  .tower-label {
+    position: absolute;
+    top: -28px;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
 
+  /* The actual drop zone */
+  .tower {
+    position: relative;
+    width: 220px;
+    height: 290px;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 10px;
+  }
+
+  /* Peg */
+  .tower::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    width: 12px;
+    height: 260px;
+    border-radius: 6px 6px 0 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+  #A .tower::before {
+    background: linear-gradient(to right, #b8360b, #e67e22, #b8360b);
+    box-shadow: 0 0 20px rgba(230,126,34,0.5), 0 0 60px rgba(230,126,34,0.2);
+  }
+  #B .tower::before {
+    background: linear-gradient(to right, #5b1e8c, #8e44ad, #5b1e8c);
+    box-shadow: 0 0 20px rgba(142,68,173,0.5), 0 0 60px rgba(142,68,173,0.2);
+  }
+  #C .tower::before {
+    background: linear-gradient(to right, #0e6655, #16a085, #0e6655);
+    box-shadow: 0 0 20px rgba(22,160,133,0.5), 0 0 60px rgba(22,160,133,0.2);
+  }
+
+  /* Peg base gem */
+  .tower::after {
+    content: '◆';
+    position: absolute;
+    bottom: -6px;
+    font-size: 14px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  #A .tower::after { color: var(--glow-a); text-shadow: 0 0 12px var(--glow-a); }
+  #B .tower::after { color: var(--glow-b); text-shadow: 0 0 12px var(--glow-b); }
+  #C .tower::after { color: var(--glow-c); text-shadow: 0 0 12px var(--glow-c); }
+
+  /* Hover glow on towers */
+  .tower.drag-over::before {
+    filter: brightness(1.6);
+  }
+
+  /* ===== DISKS ===== */
+  .disk {
+    position: relative;
+    height: 28px;
+    margin: 4px 0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: grab;
+    color: rgba(255,255,255,0.9);
+    z-index: 3;
+    transition: transform 0.15s, filter 0.15s;
+    user-select: none;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  }
+  .disk::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent 50%, rgba(0,0,0,0.2));
+    pointer-events: none;
+  }
+  .disk::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+  .disk:hover {
+    transform: scale(1.04);
+    filter: brightness(1.2);
+  }
+  .disk:active { cursor: grabbing; }
+  .disk.dragging { opacity: 0.4; }
+
+  /* Win glow on last tower */
+  .win-glow .tower::before {
+    animation: winPulse 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes winPulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(2) saturate(1.5); }
+  }
+
+  /* Bottom info strip */
+  .bottom-strip {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    margin-top: 28px;
+    padding: 14px 40px;
+    background: rgba(240,192,64,0.04);
+    border: 1px solid rgba(240,192,64,0.1);
+    border-radius: 3px;
+  }
+  .bottom-strip .label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .bottom-strip .value {
+    font-size: 20px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* Win overlay */
+  #winOverlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+  }
+  #winOverlay.show { display: flex; }
+  .win-card {
+    background: linear-gradient(145deg, #1e1510, #110d0a);
+    border: 1px solid rgba(240,192,64,0.4);
+    border-radius: 4px;
+    padding: 52px 60px;
+    text-align: center;
+    box-shadow: 0 0 80px rgba(240,192,64,0.15);
+    animation: fadeUp 0.5s ease both;
+  }
+  .win-emoji { font-size: 56px; margin-bottom: 16px; }
+  .win-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 22px;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(240,192,64,0.8);
+    margin-bottom: 10px;
+  }
+  .win-sub { color: var(--text-dim); font-size: 13px; letter-spacing: 2px; margin-bottom: 28px; }
+  .win-moves { font-size: 42px; color: var(--gold); font-weight: 700; }
+  .win-label { font-size: 11px; color: var(--text-dim); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+  .win-btn {
+    background: linear-gradient(135deg, #b8860b, #f0c040);
+    color: #0a0808;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 3px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .win-btn:hover { box-shadow: 0 0 30px rgba(240,192,64,0.5); transform: translateY(-2px); }
+
+  /* ===== REPLAY OVERLAY ===== */
+  #replayOverlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.88);
+    backdrop-filter: blur(10px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+  }
+  #replayOverlay.show { display: flex; }
+
+  .replay-card {
+    background: linear-gradient(145deg, #1e1510, #110d0a);
+    border: 1px solid rgba(240,192,64,0.3);
+    border-radius: 4px;
+    width: 980px;
+    max-width: 98vw;
+    padding: 28px 32px 24px;
+    box-shadow: 0 0 80px rgba(240,192,64,0.1), 0 30px 80px rgba(0,0,0,0.9);
+    animation: fadeUp 0.4s ease both;
+    position: relative;
+  }
+
+  .replay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .replay-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 15px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-shadow: 0 0 20px rgba(240,192,64,0.5);
+  }
+  .replay-close {
+    background: none;
+    border: 1px solid rgba(240,192,64,0.2);
+    color: var(--text-dim);
+    font-size: 18px;
+    width: 32px; height: 32px;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .replay-close:hover { color: var(--gold); border-color: rgba(240,192,64,0.5); }
+
+  /* Replay scene (smaller) */
+  .replay-scene {
+    position: relative;
+    height: 240px;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    margin-bottom: 16px;
+  }
+  .replay-ground {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 14px;
+    background: linear-gradient(to bottom, #2a1f1a, #1a1210);
+    border-top: 1px solid rgba(240,192,64,0.25);
+  }
+  .replay-tower-wrap {
+    position: relative;
+    width: 260px; height: 220px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+  }
+  .replay-peg-label {
+    position: absolute; top: -22px;
+    font-size: 10px; letter-spacing: 4px;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+  .replay-tower {
+    position: relative;
+    width: 220px; height: 210px;
+    display: flex; flex-direction: column-reverse;
+    align-items: center; justify-content: flex-start;
+    padding-top: 8px;
+  }
+  .replay-tower::before {
+    content: '';
+    position: absolute; bottom: 0;
+    width: 10px; height: 185px;
+    border-radius: 5px 5px 0 0;
+    z-index: 1; pointer-events: none;
+  }
+  #rA .replay-tower::before { background: linear-gradient(to right,#b8360b,#e67e22,#b8360b); box-shadow: 0 0 14px rgba(230,126,34,0.4); }
+  #rB .replay-tower::before { background: linear-gradient(to right,#5b1e8c,#8e44ad,#5b1e8c); box-shadow: 0 0 14px rgba(142,68,173,0.4); }
+  #rC .replay-tower::before { background: linear-gradient(to right,#0e6655,#16a085,#0e6655); box-shadow: 0 0 14px rgba(22,160,133,0.4); }
+  .replay-tower::after {
+    content: '◆'; position: absolute; bottom: -4px;
+    font-size: 12px; z-index: 2; pointer-events: none;
+  }
+  #rA .replay-tower::after { color: #e67e22; text-shadow: 0 0 10px #e67e22; }
+  #rB .replay-tower::after { color: #8e44ad; text-shadow: 0 0 10px #8e44ad; }
+  #rC .replay-tower::after { color: #16a085; text-shadow: 0 0 10px #16a085; }
+
+  .replay-disk {
+    height: 22px; margin: 3px 0;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 10px; font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    z-index: 3;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    position: relative;
+  }
+  .replay-disk::before {
+    content: ''; position: absolute; inset: 0; border-radius: 11px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.25), transparent 50%, rgba(0,0,0,0.2));
+    pointer-events: none;
+  }
+  .replay-disk.highlight {
+    transform: scale(1.08);
+    filter: brightness(1.5);
+    box-shadow: 0 0 24px currentColor !important;
+  }
+
+  /* Controls */
+  .replay-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .rp-btn {
+    background: rgba(240,192,64,0.08);
+    color: var(--gold);
+    border: 1px solid rgba(240,192,64,0.25);
+    padding: 8px 18px;
+    border-radius: 3px;
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 52px;
+    text-align: center;
+  }
+  .rp-btn:hover { background: rgba(240,192,64,0.18); }
+  .rp-btn:disabled { opacity: 0.3; cursor: default; }
+  .rp-btn.play { color: #2ecc71; border-color: rgba(46,204,113,0.3); }
+  .rp-btn.play:hover { background: rgba(46,204,113,0.12); }
+
+  .speed-label { color: var(--text-dim); font-size: 11px; letter-spacing: 2px; }
+  .speed-select {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(240,192,64,0.2);
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Progress bar + move counter */
+  .replay-progress-row {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 12px;
+  }
+  .replay-bar-wrap {
+    flex: 1; height: 6px;
+    background: rgba(240,192,64,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  .replay-bar-fill {
+    height: 100%;
+    background: linear-gradient(to right, #b8860b, #f0c040);
+    border-radius: 3px;
+    transition: width 0.3s;
+    box-shadow: 0 0 8px rgba(240,192,64,0.4);
+    width: 0%;
+  }
+  .replay-step-label {
+    font-size: 12px; color: var(--text-dim); letter-spacing: 1px; white-space: nowrap;
+    min-width: 80px; text-align: right;
+  }
+
+  /* Move list */
+  .replay-log {
+    max-height: 70px;
+    overflow-y: auto;
+    border: 1px solid rgba(240,192,64,0.1);
+    border-radius: 3px;
+    padding: 8px 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(240,192,64,0.3) transparent;
+  }
+  .log-pill {
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(240,192,64,0.06);
+    border: 1px solid rgba(240,192,64,0.12);
+    color: var(--text-dim);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .log-pill.active {
+    background: rgba(240,192,64,0.18);
+    border-color: rgba(240,192,64,0.5);
+    color: var(--gold);
+    box-shadow: 0 0 10px rgba(240,192,64,0.2);
+  }
+  .log-pill.done {
+    background: rgba(46,204,113,0.08);
+    border-color: rgba(46,204,113,0.2);
+    color: rgba(46,204,113,0.7);
+  }
 </style>
 </head>
-
 <body>
 
-<!-- LOGIN PAGE -->
+<div class="stars"></div>
+<div class="mist"></div>
 
-<div class="card" id="login">
-
-<h1>Recursive Tower of Hanoi</h1>
-<p class="subtitle">Create an account to play the puzzle</p>
-
-<div class="tabs">
-<div class="active">Login</div>
-<div>Sign Up</div>
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-rune">🏛️</div>
+  <h1>Tower of Hanoi</h1>
+  <p class="login-sub">Temple of Recursion</p>
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-gem">◆</div>
+    <div class="divider-line"></div>
+  </div>
+  <div class="tabs">
+    <div class="active">Enter</div>
+    <div>Inscribe</div>
+  </div>
+  <div class="input-group"><input placeholder="Your Name" /></div>
+  <div class="input-group"><input placeholder="Scroll or Email" /></div>
+  <div class="input-group"><input type="password" placeholder="Secret Cipher" /></div>
+  <button class="start-btn" onclick="startGame()">Begin the Trial</button>
 </div>
 
-<div class="input">
-<input placeholder="Full Name">
-</div>
-
-<div class="input">
-<input placeholder="Username or Email">
-</div>
-
-<div class="input">
-<input type="password" placeholder="Password">
-</div>
-
-<button class="start-btn" onclick="startGame()">Start Game</button>
-
-</div>
-
-
-<!-- GAME PAGE -->
-
+<!-- GAME -->
 <div id="game">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <button class="ctrl-btn" style="color:#e74c3c;border-color:rgba(231,76,60,0.3);font-size:10px;padding:6px 14px;" onclick="logOut()">⎋ Log Out</button>
+  </div>
+  <div class="game-title">Tower of Hanoi</div>
+  <div class="game-title-sub">◆ Temple of Recursion ◆</div>
 
-<h1>Recursive Tower of Hanoi</h1>
+  <div class="top-bar">
+    <div class="stat-box">Disks<span id="diskCountDisplay">3</span></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="ctrl-btn small" onclick="changeDisks(-1)">▾</button>
+      <button class="ctrl-btn small" onclick="changeDisks(1)">▴</button>
+    </div>
+    <div class="stat-box">Moves<span id="moves">0</span></div>
+    <div class="stat-box">Minimum<span id="minMoves">7</span></div>
+  </div>
 
-<div class="top-bar">
+  <div class="btn-row">
+    <button class="ctrl-btn danger" onclick="resetGame()">↺ Restart</button>
+    <button class="ctrl-btn" id="replayBtn" onclick="openReplay()">⏮ Replay</button>
+    <button class="ctrl-btn solve" onclick="autoSolve()">✦ Auto-Solve</button>
+  </div>
 
-Disks:
-<button onclick="changeDisks(-1)">▼</button>
-<span id="diskCountDisplay">3</span>
-<button onclick="changeDisks(1)">▲</button>
+  <div class="scene">
+    <div class="ground"></div>
 
-Moves: <span id="moves">0</span>
+    <div class="tower-wrap" id="A">
+      <div class="tower-label">Peg I</div>
+      <div class="tower" id="tA"></div>
+    </div>
+    <div class="tower-wrap" id="B">
+      <div class="tower-label">Peg II</div>
+      <div class="tower" id="tB"></div>
+    </div>
+    <div class="tower-wrap" id="C">
+      <div class="tower-label">Peg III</div>
+      <div class="tower" id="tC"></div>
+    </div>
+  </div>
 
-<button onclick="resetGame()">Restart</button>
-<button onclick="showLog()">Log</button>
-<button onclick="autoSolve()">Solve!</button>
-
+  <div class="bottom-strip">
+    <div>
+      <div class="label">Progress</div>
+      <div class="value" id="progressVal">0%</div>
+    </div>
+    <div>
+      <div class="label">Efficiency</div>
+      <div class="value" id="efficiencyVal">—</div>
+    </div>
+    <div>
+      <div class="label">Status</div>
+      <div class="value" id="statusVal" style="font-size:14px;letter-spacing:2px">Awaiting Move</div>
+    </div>
+  </div>
 </div>
 
-<div class="container">
+<!-- REPLAY OVERLAY -->
+<div id="replayOverlay">
+  <div class="replay-card">
+    <div class="replay-header">
+      <div class="replay-title">⏮ Replay — Your Solution</div>
+      <button class="replay-close" onclick="closeReplay()">✕</button>
+    </div>
 
-<div class="tower" id="A"></div>
-<div class="tower" id="B"></div>
-<div class="tower" id="C"></div>
+    <div class="replay-scene">
+      <div class="replay-ground"></div>
+      <div class="replay-tower-wrap" id="rA">
+        <div class="replay-peg-label">Peg I</div>
+        <div class="replay-tower" id="rtA"></div>
+      </div>
+      <div class="replay-tower-wrap" id="rB">
+        <div class="replay-peg-label">Peg II</div>
+        <div class="replay-tower" id="rtB"></div>
+      </div>
+      <div class="replay-tower-wrap" id="rC">
+        <div class="replay-peg-label">Peg III</div>
+        <div class="replay-tower" id="rtC"></div>
+      </div>
+    </div>
 
+    <div class="replay-progress-row">
+      <div class="replay-bar-wrap" id="replayBarWrap" onclick="replaySeek(event)">
+        <div class="replay-bar-fill" id="replayBarFill"></div>
+      </div>
+      <div class="replay-step-label" id="replayStepLabel">0 / 0</div>
+    </div>
+
+    <div class="replay-controls">
+      <button class="rp-btn" id="rpFirst" onclick="replayGoTo(0)" title="First">⏮</button>
+      <button class="rp-btn" id="rpPrev"  onclick="replayStep(-1)" title="Back">◀</button>
+      <button class="rp-btn play" id="rpPlay" onclick="replayTogglePlay()">▶ Play</button>
+      <button class="rp-btn" id="rpNext"  onclick="replayStep(1)"  title="Forward">▶</button>
+      <button class="rp-btn" id="rpLast"  onclick="replayGoTo(-1)" title="Last">⏭</button>
+      <span class="speed-label">Speed</span>
+      <select class="speed-select" id="replaySpeed">
+        <option value="800">Slow</option>
+        <option value="450" selected>Normal</option>
+        <option value="200">Fast</option>
+        <option value="80">Turbo</option>
+      </select>
+    </div>
+
+    <div class="replay-log" id="replayLog"></div>
+  </div>
 </div>
 
-<div class="bottom-info">
-Minimum Moves: <span id="minMoves">7</span>
+<!-- WIN OVERLAY -->
+<div id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji">🏆</div>
+    <div class="win-title">Puzzle Solved!</div>
+    <div class="win-sub">The ancient mystery is complete</div>
+    <div class="win-moves" id="winMovesNum">0</div>
+    <div class="win-label">Moves Taken</div>
+    <button class="win-btn" onclick="closeWin()">Play Again</button>
+    <button class="win-btn" style="margin-top:10px;background:rgba(240,192,64,0.1);color:var(--gold);border:1px solid rgba(240,192,64,0.3);" onclick="closeWinAndReplay()">⏮ Watch Replay</button>
+  </div>
 </div>
-
-</div>
-
 
 <script>
-
-/* LOGIN -> GAME */
+// Disk color palettes — jewel tones
+const DISK_COLORS = [
+  {bg:'#c0392b',glow:'rgba(192,57,43,0.7)'},
+  {bg:'#e67e22',glow:'rgba(230,126,34,0.7)'},
+  {bg:'#f1c40f',glow:'rgba(241,196,15,0.7)'},
+  {bg:'#27ae60',glow:'rgba(39,174,96,0.7)'},
+  {bg:'#16a085',glow:'rgba(22,160,133,0.7)'},
+  {bg:'#2980b9',glow:'rgba(41,128,185,0.7)'},
+  {bg:'#8e44ad',glow:'rgba(142,68,173,0.7)'},
+];
 
 function startGame(){
-document.getElementById("login").style.display="none"
-document.getElementById("game").style.display="block"
-createGame()
+  document.getElementById('login').style.display='none';
+  document.getElementById('game').style.display='block';
+  createGame();
 }
 
-/* GAME LOGIC */
+let diskCount=3, moveCount=0, isSolving=false, moveLog=[], moveLogStructured=[];
+const towers={A:[],B:[],C:[]};
 
-let diskCount=3
-let moveCount=0
-let isSolving=false
-let moveLog=[]
-
-const towers={A:[],B:[],C:[]}
+function towerEl(id){ return document.getElementById('t'+id); }
 
 function updateDisplays(){
-document.getElementById("moves").textContent=moveCount
-document.getElementById("diskCountDisplay").textContent=diskCount
-document.getElementById("minMoves").textContent=Math.pow(2,diskCount)-1
-}
-
-function randomColor(){
-let letters="0123456789ABCDEF"
-let color="#"
-for(let i=0;i<6;i++){
-color+=letters[Math.floor(Math.random()*16)]
-}
-return color
+  document.getElementById('moves').textContent=moveCount;
+  document.getElementById('diskCountDisplay').textContent=diskCount;
+  const min=Math.pow(2,diskCount)-1;
+  document.getElementById('minMoves').textContent=min;
+  const prog=Math.round((towers.C.length/diskCount)*100);
+  document.getElementById('progressVal').textContent=prog+'%';
+  if(moveCount>0){
+    const eff=Math.round((min/moveCount)*100);
+    document.getElementById('efficiencyVal').textContent=eff+'%';
+  } else {
+    document.getElementById('efficiencyVal').textContent='—';
+  }
+  document.getElementById('statusVal').textContent=
+    isSolving ? 'Solving…' : (towers.C.length===diskCount ? 'Complete!' : 'In Progress');
 }
 
 function createGame(){
+  ['A','B','C'].forEach(t=>{
+    towerEl(t).innerHTML='';
+    towers[t]=[];
+  });
+  moveCount=0; moveLog=[]; moveLogStructured=[];
+  updateDisplays();
 
-["A","B","C"].forEach(t=>{
-document.getElementById(t).innerHTML=""
-towers[t]=[]
-})
+  for(let i=diskCount;i>=1;i--){
+    const disk=document.createElement('div');
+    disk.className='disk';
+    const w=Math.round(40+(i/diskCount)*150);
+    disk.style.width=w+'px';
+    const col=DISK_COLORS[(i-1)%DISK_COLORS.length];
+    disk.style.background=col.bg;
+    disk.style.boxShadow=`0 0 16px ${col.glow}, 0 4px 12px rgba(0,0,0,0.5)`;
+    disk.textContent=i;
+    disk.draggable=true;
+    disk.dataset.size=i;
+    disk.addEventListener('dragstart',dragStart);
+    towerEl('A').appendChild(disk);
+    towers.A.push(i);
+  }
 
-moveCount=0
-moveLog=[]
-updateDisplays()
-
-for(let i=diskCount;i>=1;i--){
-
-const disk=document.createElement("div")
-
-disk.className="disk"
-disk.style.width=(i*30+40)+"px"
-disk.style.background=randomColor()
-disk.textContent=i
-disk.draggable=true
-disk.dataset.size=i
-
-disk.addEventListener("dragstart",dragStart)
-
-document.getElementById("A").appendChild(disk)
-
-towers.A.push(i)
-
+  ['A','B','C'].forEach(id=>{
+    const el=towerEl(id);
+    el.addEventListener('dragover',e=>{ e.preventDefault(); el.classList.add('drag-over'); });
+    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+    el.addEventListener('drop',dropDisk);
+  });
 }
 
-}
+let draggingSize=null, draggingFrom=null;
 
 function dragStart(e){
-
-if(isSolving){
-e.preventDefault()
-return
+  if(isSolving){ e.preventDefault(); return; }
+  const size=parseInt(e.target.dataset.size);
+  const parent=e.target.closest('.tower').id.replace('t','');
+  if(towers[parent][towers[parent].length-1]!==size){ e.preventDefault(); return; }
+  draggingSize=size; draggingFrom=parent;
+  e.dataTransfer.setData('size',size);
+  e.dataTransfer.setData('from',parent);
+  e.target.classList.add('dragging');
+  setTimeout(()=>e.target.classList.remove('dragging'),0);
 }
-
-const size=parseInt(e.target.dataset.size)
-const parent=e.target.parentElement.id
-
-if(towers[parent][towers[parent].length-1]!==size){
-e.preventDefault()
-return
-}
-
-e.dataTransfer.setData("size",size)
-e.dataTransfer.setData("from",parent)
-
-}
-
-document.querySelectorAll(".tower").forEach(tower=>{
-tower.addEventListener("dragover",e=>e.preventDefault())
-tower.addEventListener("drop",dropDisk)
-})
 
 function dropDisk(e){
-
-if(isSolving) return
-
-const from=e.dataTransfer.getData("from")
-const to=e.currentTarget.id
-
-moveDisk(from,to)
-
+  if(isSolving) return;
+  const to=e.currentTarget.id.replace('t','');
+  e.currentTarget.classList.remove('drag-over');
+  const from=e.dataTransfer.getData('from');
+  moveDisk(from,to);
 }
 
 function moveDisk(from,to){
-
-if(from===to) return
-
-const disk=towers[from].pop()
-if(!disk) return
-
-const top=towers[to][towers[to].length-1]
-
-if(top && top<disk){
-towers[from].push(disk)
-return
+  if(from===to) return;
+  const disk=towers[from].pop();
+  if(!disk) return;
+  const top=towers[to][towers[to].length-1];
+  if(top && top<disk){ towers[from].push(disk); return; }
+  towers[to].push(disk);
+  const diskEl=towerEl(from).querySelector(`.disk[data-size='${disk}']`);
+  if(diskEl) towerEl(to).appendChild(diskEl);
+  moveCount++;
+  moveLog.push(`Move disk ${disk}: ${from} \u2192 ${to}`);
+  moveLogStructured.push({size:disk, from, to});
+  updateDisplays();
+  if(towers.C.length===diskCount) setTimeout(showWin,300);
 }
 
-towers[to].push(disk)
-
-const diskElement=document.querySelector(`#${from} .disk[data-size='${disk}']`)
-document.getElementById(to).appendChild(diskElement)
-
-moveCount++
-
-moveLog.push(`Move disk ${disk} from ${from} → ${to}`)
-
-updateDisplays()
-checkWin()
-
+function showWin(){
+  document.getElementById('winMovesNum').textContent=moveCount;
+  document.getElementById('winOverlay').classList.add('show');
+  document.getElementById('C').classList.add('win-glow');
 }
 
-function checkWin(){
-
-if(towers.C.length===diskCount){
-
-setTimeout(()=>{
-alert("🎉 Completed in "+moveCount+" moves!")
-},200)
-
+function closeWin(){
+  document.getElementById('winOverlay').classList.remove('show');
+  document.getElementById('C').classList.remove('win-glow');
+  resetGame();
 }
 
+function closeWinAndReplay(){
+  // snapshot before reset clears the log
+  const snapMoves=[...moveLogStructured];
+  const snapDiskCount=diskCount;
+  document.getElementById('winOverlay').classList.remove('show');
+  document.getElementById('C').classList.remove('win-glow');
+  resetGame();
+  // open replay with snapshot
+  setTimeout(()=>openReplayWithSnapshot(snapMoves, snapDiskCount), 100);
 }
 
-function changeDisks(change){
-
-if(isSolving) return
-
-diskCount+=change
-
-if(diskCount<2) diskCount=2
-if(diskCount>7) diskCount=7
-
-createGame()
-
+function changeDisks(d){
+  if(isSolving) return;
+  diskCount=Math.max(2,Math.min(7,diskCount+d));
+  createGame();
 }
 
 function resetGame(){
-isSolving=false
-createGame()
+  isSolving=false;
+  document.getElementById('C').classList.remove('win-glow');
+  createGame();
 }
 
-function showLog(){
+// ===== REPLAY ENGINE =====
+let replayMoves=[], replayCursor=0, replayInterval=null, replayPlaying=false;
+let replayDiskCount=3;
+const replayTowers={A:[],B:[],C:[]};
 
-console.clear()
-console.log("Move Log")
+function rtowerEl(id){ return document.getElementById('rt'+id); }
 
-moveLog.forEach(m=>console.log(m))
+function openReplay(){
+  if(moveLogStructured.length===0){ alert('No moves to replay yet! Make some moves first.'); return; }
+  openReplayWithSnapshot([...moveLogStructured], diskCount);
+}
 
+function openReplayWithSnapshot(moves, dc){
+  replayMoves=moves;
+  replayDiskCount=dc;
+  document.getElementById('replayOverlay').classList.add('show');
+  buildReplayLog();
+  replayGoTo(0);
+}
+
+function closeReplay(){
+  stopReplayPlay();
+  document.getElementById('replayOverlay').classList.remove('show');
+}
+
+function buildReplayLog(){
+  const container=document.getElementById('replayLog');
+  container.innerHTML='';
+  replayMoves.forEach((m,i)=>{
+    const pill=document.createElement('div');
+    pill.className='log-pill';
+    pill.id='pill-'+i;
+    pill.textContent=`${m.size}: ${m.from}\u2192${m.to}`;
+    container.appendChild(pill);
+  });
+}
+
+function makeReplayDisk(size){
+  const disk=document.createElement('div');
+  disk.className='replay-disk';
+  const w=Math.round(30+(size/replayDiskCount)*130);
+  disk.style.width=w+'px';
+  const col=DISK_COLORS[(size-1)%DISK_COLORS.length];
+  disk.style.background=col.bg;
+  disk.style.boxShadow=`0 0 12px ${col.glow}, 0 3px 8px rgba(0,0,0,0.5)`;
+  disk.dataset.size=size;
+  disk.textContent=size;
+  return disk;
+}
+
+function replayApplyMove(mv, highlight=true){
+  replayTowers[mv.from].pop();
+  replayTowers[mv.to].push(mv.size);
+  const diskEl=rtowerEl(mv.from).querySelector(`.replay-disk[data-size='${mv.size}']`);
+  if(diskEl){
+    rtowerEl(mv.to).appendChild(diskEl);
+    if(highlight){
+      diskEl.classList.add('highlight');
+      setTimeout(()=>diskEl.classList.remove('highlight'),400);
+    }
+  }
+}
+
+function replayUndoMove(mv){
+  replayTowers[mv.to].pop();
+  replayTowers[mv.from].push(mv.size);
+  const diskEl=rtowerEl(mv.to).querySelector(`.replay-disk[data-size='${mv.size}']`);
+  if(diskEl) rtowerEl(mv.from).appendChild(diskEl);
+}
+
+function replayGoTo(target){
+  stopReplayPlay();
+  if(target===-1) target=replayMoves.length;
+  // full rebuild from scratch
+  ['A','B','C'].forEach(t=>{ rtowerEl(t).innerHTML=''; replayTowers[t]=[]; });
+  for(let i=replayDiskCount;i>=1;i--){
+    replayTowers.A.push(i);
+    rtowerEl('A').appendChild(makeReplayDisk(i));
+  }
+  for(let i=0;i<target;i++) replayApplyMove(replayMoves[i], false);
+  replayCursor=target;
+  updateReplayUI();
+}
+
+function replayStep(dir){
+  stopReplayPlay();
+  if(dir===1 && replayCursor<replayMoves.length){
+    replayApplyMove(replayMoves[replayCursor], true);
+    replayCursor++;
+  } else if(dir===-1 && replayCursor>0){
+    replayCursor--;
+    replayUndoMove(replayMoves[replayCursor]);
+  }
+  updateReplayUI();
+}
+
+function replayTogglePlay(){
+  if(replayPlaying){ stopReplayPlay(); return; }
+  if(replayCursor>=replayMoves.length) replayGoTo(0);
+  replayPlaying=true;
+  document.getElementById('rpPlay').textContent='\u23F8 Pause';
+  const speed=()=>parseInt(document.getElementById('replaySpeed').value);
+  function tick(){
+    if(replayCursor>=replayMoves.length){ stopReplayPlay(); return; }
+    replayApplyMove(replayMoves[replayCursor], true);
+    replayCursor++;
+    updateReplayUI();
+    replayInterval=setTimeout(tick, speed());
+  }
+  replayInterval=setTimeout(tick, speed());
+}
+
+function stopReplayPlay(){
+  clearTimeout(replayInterval);
+  replayPlaying=false;
+  const btn=document.getElementById('rpPlay');
+  if(btn) btn.textContent='\u25B6 Play';
+}
+
+function replaySeek(e){
+  stopReplayPlay();
+  const rect=e.currentTarget.getBoundingClientRect();
+  const pct=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+  const target=Math.round(pct*replayMoves.length);
+  replayGoTo(target);
+}
+
+function updateReplayUI(){
+  const total=replayMoves.length;
+  const cur=replayCursor;
+  document.getElementById('replayStepLabel').textContent=`${cur} / ${total}`;
+  document.getElementById('replayBarFill').style.width=(total>0?(cur/total*100):0)+'%';
+  replayMoves.forEach((_,i)=>{
+    const pill=document.getElementById('pill-'+i);
+    if(!pill) return;
+    pill.className='log-pill'+(i===cur-1?' active':i<cur?' done':'');
+  });
+  const activePill=document.getElementById('pill-'+(cur-1));
+  if(activePill) activePill.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});
+  document.getElementById('rpFirst').disabled=cur===0;
+  document.getElementById('rpPrev').disabled=cur===0;
+  document.getElementById('rpNext').disabled=cur>=total;
+  document.getElementById('rpLast').disabled=cur>=total;
+}
+
+
+function logOut(){
+  stopReplayPlay();
+  isSolving=false;
+  document.getElementById('winOverlay').classList.remove('show');
+  document.getElementById('replayOverlay').classList.remove('show');
+  document.getElementById('game').style.display='none';
+  document.getElementById('login').style.display='block';
 }
 
 function autoSolve(){
-
-if(isSolving) return
-
-isSolving=true
-
-const moves=[]
-
-generateMoves(diskCount,"A","C","B",moves)
-
-let i=0
-
-const interval=setInterval(()=>{
-
-if(i>=moves.length){
-clearInterval(interval)
-isSolving=false
-return
-}
-
-moveDisk(moves[i][0],moves[i][1])
-i++
-
-},500)
-
+  if(isSolving) return;
+  isSolving=true;
+  updateDisplays();
+  const moves=[];
+  generateMoves(diskCount,'A','C','B',moves);
+  let i=0;
+  const delay=Math.max(200, 700-diskCount*60);
+  const interval=setInterval(()=>{
+    if(i>=moves.length){ clearInterval(interval); isSolving=false; updateDisplays(); return; }
+    moveDisk(moves[i][0],moves[i][1]);
+    i++;
+  }, delay);
 }
 
 function generateMoves(n,from,to,aux,moves){
-
-if(n===1){
-moves.push([from,to])
-return
+  if(n===1){ moves.push([from,to]); return; }
+  generateMoves(n-1,from,aux,to,moves);
+  moves.push([from,to]);
+  generateMoves(n-1,aux,to,from,moves);
 }
-
-generateMoves(n-1,from,aux,to,moves)
-moves.push([from,to])
-generateMoves(n-1,aux,to,from,moves)
-
-}
-
 </script>
-
 </body>
 </html>
